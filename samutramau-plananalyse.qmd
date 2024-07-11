@@ -1,0 +1,175 @@
+---
+title: "STOP-NACO"
+subtitle: "Plan d'analyse Statistique V 1.1"
+author: "D\\textsuperscript{r} Philippe \\textsc{Michel} -- USCR, Hôpital NOVO"
+lang: fr
+format:
+ titlepage-pdf:
+  titlepage: bg-image
+  titlepage-bg-image: "novo_usrc.png"
+  logo-space-after: "0\\baselineskip"
+  documentclass: scrartcl
+  number-sections: true
+  titlepage-footer:  "Pierre \\textsc{Chenevier}  \\newline D\\textsuperscript{r} Fabrice  \\textsc{Louvet} -- SAMU 95, Hôpital \\textsc{novo} (Site Pontoise)\\newline \\newline Chef de projet : M\\textsuperscript{me} Véronique \\textsc{Da Costa}\\newline \\newline Étude rétrospective de l'orientation d'un patient traumatisé grave dans le Val d'Oise. \\newline \\newline \\today"
+titlepage-theme:
+  title-fontstyle: ["Huge", "bfseries"]
+  title-color: novo
+  subtitle-color: novo
+  subtitle-fontstyle: ["huge"]
+  logo-size: "0.2\\textheight"
+  vrule-width: "0.1cm"
+  vrule-color: novo
+include-in-header:
+   text: |
+    \definecolor{novo}{HTML}{27484b}
+    \usepackage[locale = FR, per-mode = symbol]{siunitx}
+    \usepackage[section]{placeins}
+    \usepackage{arsenal}
+df-print : kable
+jss-pdf:
+  keep-tex: true
+pdf-engine: lualatex
+keep-tex: true
+number-sections: true
+toc: true
+lof: false
+lot: false
+fig-cap-location: bottom
+tbl-cap-location: top
+classoption: [french, a4paper]
+papersize: a4
+editor: source
+bibliography: stat.bib
+cite-method: biblatex
+# csl: jama.csl
+reference-location: margin
+citation-location: margin
+license: "MIT"
+fig-width: 10
+echo: false
+warning: false
+message: false
+cache: true
+---
+
+```{r}
+#| label: setup
+
+rm(list = ls())
+#
+library(baseph)
+library(janitor)
+library(tidyverse)
+#
+options(OutDec = ",")
+#
+```
+
+# Généralités
+
+*Ce document ne concerne que l'analyse statistique des données.*
+
+Il s'agit d'un étude de pratique rétrospective portant principalement sur l'orientation des patients traumatisés , les services receveurs étant classés en trois catégories : Niveau 1 (le plus élevé), 2 & 3 (hôpital de secteur). La qualité de l'orientation des patients sera résumée par une variable à trois cases : sur-trié, normo-trié & sous-trié.
+
+Le risque $\alpha$ retenu sera de 0,05 & la puissance de 0,8.
+
+L'étude comporte principalement des variables qualitatives. Celles-ci seront présentées par le nombre & le pourcentage avec son intervalle de confiance (Méthode de Wilson (package BioStatR [@biostatr]) avec, si besoin, correction de continuité).  Le test du $\chi^2$ de Spearmann sera utilisé avec correction de Yates si nécessaire. Les variables numériques seront présentées par leur moyenne avec l'écart-type  & comparées par un test t de Student après vérification de l'égalité des variances (sous réserve d'une distribution normale).
+
+Des graphiques (package ggplot2 [@ggplot]) seront réalisés pour tous les résultats importants. 
+
+# Nombre de cas nécessaires.
+
+```{r}
+#| label: cas_necessaires
+
+zz <- nb.obs.ph(px = 0.5, ex = 0.05, np = 65e6)
+zz <- round(zz *1.2,0) + 1
+```
+
+Il s'agit d'une étude observationnelle sans test pour le critère principal donc pas de calcul précis du nombre de cas. Néanmoins en calculant pour un résultat principal autour de 50 % (cas le plus défavorable) & une marge d'erreur acceptable de 5 % dans une grande population on peut estimer la taille de l'échantillon nécessaire autour de `r zz` cas utilisables. Une analyse par bootstrap confirme ce résultat (package boot [@boot]).
+
+## Gestion des données manquantes.
+
+Les données manquantes seront présentées pour chaque variable sur un graphique (package visdat [@visdat]).
+
+Après accord du promoteur les variables comportant plus de 20 % de données manquantes seront exclues de l'analyse.
+
+# Analyse
+
+## Description des cas
+
+Un tableau descriptif (package gtsummary [@gtsummary]) des cas sera réalisé.
+
+## Critère principal
+
+*Le critère d’évaluation principal est l’évaluation de l’orientation du patient traumatisé grave après bilan lésionnel post SMUR en sur trié, normo trié et sous trié.*
+
+Un tableau présentera le nombre (et pourcentage) de patients selon la qualité de l'orientation (3 catégories) puis en croisant avec la destination finale. Un test du $\Chi^2$ de Pearson permettra de mettre en évidence des différences de qualité de triage selon la destination finale.
+
+::: {.callout-important}
+Sur la région IdF il n'y a pas de service de niveau 2. 
+
+Les patients qui auraient du être orientés vers un service de niveau 2 seront considérés comme normo-triés si adressés en niveau 3 & sous-triés si adressés en niveau 1.
+:::
+
+\bigskip
+
+## Critères secondaires
+
+\bigskip
+
+### Critère secondaire 1
+
+*Proportion de patients sous-triés sur les plages horaires*
+
+La journée est découpée en quatre plages horaires & la pertinence de l'orientation sera comparée entre ces plages. Un test du $\Chi^2$ de Pearson permettra de mettre en évidence des différences de qualité de triage selon l'horaire.
+
+Si les effectifs dans les tranches horaires se révèlent insuffisants on regroupera les cases `7h - 9h` & `18h - 21 h` qui correspondent à des horaires difficiles pour des raisons organisationnelles des services.
+
+\bigskip
+
+### Critères secondaires 2 & 3
+
+*Proportion de sous-triage chez les patients avec une intoxication alcoolique ou autre toxique supposée*
+
+La comparaison des décisions (pertinence de la décision) sera faite pour les patients suspectés d'avoir une intoxication alcoolique puis pour ceux suspectés d'une prise de toxique. Un test du $\Chi^2$ de Pearson permettra de mettre en évidence des différences de qualité de triage selon la suspicion d'intoxication. Si nombre d'intoxication est faible on regroupera les patients en un seul groupe `Intoxication alcoolique ou autre`.
+
+\bigskip
+
+### Critère secondaire 4,5 & 7
+
+*Corrélation entre le grade de TRENAU, le Shock-index, le score de MGAP et le niveau du trauma center pour l’admission finale*
+
+Pour ces critères la classification étudiée (Grade de TRENAU, Shock-index & Score MGAP) devrait être corrélée avec le niveau de l'établissement de destination selon le tableau suivant :
+
+\bigskip
+
+| Score           | Classe  | Destination idéale   | Destination IdF|
+|-----------------|---------|---------------|-----------------|
+| **TRENAU**      | A       | Niveau 1      | Niveau 1 |
+|                 | B       | Niveau 2      | Niveau 3 |
+|                 | C       | Niveau 3      | Niveau 3 |
+| ||||
+| **Shock-index** | $\geq$ 0,9| Niveau 1      | Niveau 1| 
+|                 | $<$ 0,9  | Niveau 2 ou 3 | Niveau 3 |
+| ||||
+| **MGAP**        | $<$ 18    | Niveau 1      | Niveau 1 |
+|                 | 18 - 22 | Niveau 2      | Niveau 3 |
+|                 | 23 - 29 | Niveau 3      | Niveau 3 |
+
+\bigskip
+
+Des tests d’adéquation du $\Chi^2$ de Pearson permettra de mettre en évidence d'éventuels écarts, score par score, en comparant la répartition observée à une répartition idéale. Pour ces trois scores l'erreur majeure serait un sous triage c'est à dire un faux négatif (le diagnostic de la gravité du cas n'a pas été fait) donc le critère le plus important est la sensibilité qui sera présentée (package epiDisplay [@epid]) avec son intervalle de confiance (Méthode de Wilson avec, si besoin, correction de continuité) en comparant sous-triés vs normo-triés ou sur-triés. 
+
+Des courbes ROC pourront être tracées pour chaque score (package pROC [@proc]) avec calcul de l'aire sous la courbe (AUC) pour comparer la qualité des scores.
+
+## Critère secondaire 6
+
+*Nombre de patients avec un Shock-index positif lors de la prise en charge du SMUR et ayant eu une transfusion sanguine intra-hospitalière*
+
+Un tableau présentera le taux de transfusion intra hospitalière selon le Shock-index. Un test du $\Chi^2$ de Pearson permettra de mettre en évidence une éventuelle association entre le Shock-index (en deux classes, seuil à 0,9) & la transfusion (Oui/Non).
+
+
+# Technique {.appendix}
+
+L'analyse statistique sera réalisée avec le logiciel **R** [@rstat] & divers packages en particulier `tidyverse` [@tidy]  & `baseph` [@baseph] ainsi que ceux cités dans le texte.

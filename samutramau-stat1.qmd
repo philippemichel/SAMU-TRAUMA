@@ -1,0 +1,89 @@
+---
+title: "STOP-NACO"
+subtitle: "Rapport Statistique V 1.0"
+author: "D\\textsuperscript{r} Philippe \\textsc{Michel} -- USCR, Hôpital NOVO"
+lang: fr
+format:
+ titlepage-pdf:
+  titlepage: bg-image
+  titlepage-bg-image: "novo_usrc.png"
+  logo-space-after: "0\\baselineskip"
+  documentclass: scrreprt
+  number-sections: true
+  titlepage-footer:  "Pierre \\textsc{Chenevier}  \\newline D\\textsuperscript{r} Fabrice  \\textsc{Louvet} -- SAMU 95, Hôpital \\textsc{novo} (Site Pontoise)\\newline \\newline Chef de projet : M\\textsuperscript{me} Véronique \\textsc{Da Costa}\\newline \\newline Étude rétrospective de l'orientation d'un patient traumatisé grave dnas le Val d'Oise. \\newline \\newline \\today"
+titlepage-theme:
+  title-fontstyle: ["Huge", "bfseries"]
+  title-color: novo
+  subtitle-color: novo
+  subtitle-fontstyle: ["huge"]
+  logo-size: "0.2\\textheight"
+  vrule-width: "0.1cm"
+  vrule-color: novo
+include-in-header:
+   text: |
+    \definecolor{novo}{HTML}{27484b}
+    \usepackage[locale = FR, per-mode = symbol]{siunitx}
+    \usepackage[section]{placeins}
+    \usepackage{arsenal}
+df-print : kable
+jss-pdf:
+  keep-tex: true
+pdf-engine: lualatex
+keep-tex: true
+number-sections: true
+toc: true
+lof: true
+lot: true
+fig-cap-location: bottom
+tbl-cap-location: top
+classoption: [french]
+papersize: a4
+editor: source
+#bibliography: stat.bib
+#cite-method: biblatex
+#csl: jama.csl
+#reference-location: margin
+#citation-location: margin
+license: "MIT"
+fig-width: 10
+echo: false
+warning: false
+message: false
+cache: false
+---
+
+
+```{r}
+#| label: setup
+
+rm(list = ls())
+#
+library(baseph)
+library(janitor)
+library(tidyverse)
+library(gtsummary)
+library(kableExtra)
+library(lubridate)
+library(kableExtra)
+library(forestmodel)
+library(labelled)
+library(epiDisplay)
+library(visdat)
+library(GGally)
+library(ggridges)
+library(colorspace)
+library(xlsx)
+library(apyramid)
+library(plotly)
+#
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+options(OutDec = ",")
+#
+load("datas/stopnaco.RData")
+expx <- TRUE
+classeur <- "copsca2.xls"
+if (expx){system(paste0("rm -f ",classeur))}
+#
+cat <- list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test")
+affl <- list(all_categorical()~"{n}/{N} ({p})")
+```
