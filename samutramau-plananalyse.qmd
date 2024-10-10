@@ -1,7 +1,7 @@
 ---
-title: "STOP-NACO"
-subtitle: "Plan d'analyse Statistique V 1.1"
-author: "D\\textsuperscript{r} Philippe \\textsc{Michel} -- USCR, Hôpital NOVO"
+title: "SAMU-TRAUMAS"
+subtitle: "Plan d'analyse Statistique V 1.0"
+author: "D\\textsuperscript{r} Philippe \\textsc{Michel} -- USRC Hôpital NOVO"
 lang: fr
 format:
  titlepage-pdf:
@@ -69,7 +69,7 @@ options(OutDec = ",")
 
 *Ce document ne concerne que l'analyse statistique des données.*
 
-Il s'agit d'un étude de pratique rétrospective portant principalement sur l'orientation des patients traumatisés , les services receveurs étant classés en trois catégories : Niveau 1 (le plus élevé), 2 & 3 (hôpital de secteur). La qualité de l'orientation des patients sera résumée par une variable à trois cases : sur-trié, normo-trié & sous-trié.
+Il s'agit d'un étude de pratique rétrospective portant principalement sur l'orientation des patients traumatisés graves , les services receveurs étant classés en trois catégories : Niveau 1 (le plus élevé), 2 & 3 (hôpital de secteur). La qualité de l'orientation des patients sera résumée par une variable à trois cases : sur-trié, normo-trié & sous-trié.
 
 Le risque $\alpha$ retenu sera de 0,05 & la puissance de 0,8.
 
@@ -107,9 +107,9 @@ Un tableau descriptif (package gtsummary [@gtsummary]) des cas sera réalisé.
 Un tableau présentera le nombre (et pourcentage) de patients selon la qualité de l'orientation (3 catégories) puis en croisant avec la destination finale. Un test du $\Chi^2$ de Pearson permettra de mettre en évidence des différences de qualité de triage selon la destination finale.
 
 ::: {.callout-important}
-Sur la région IdF il n'y a pas de service de niveau 2. 
+Sur le Val d'Oise il n'y a pas de service de niveau 2. 
 
-Les patients qui auraient du être orientés vers un service de niveau 2 seront considérés comme normo-triés si adressés en niveau 3 & sous-triés si adressés en niveau 1.
+Les patients qui auraient du être orientés vers un service de niveau 2 seront considérés comme normo-triés si adressés en niveau 1 & sous-triés si adressés en niveau 3.
 :::
 
 \bigskip
@@ -142,24 +142,23 @@ La comparaison des décisions (pertinence de la décision) sera faite pour les p
 
 Pour ces critères la classification étudiée (Grade de TRENAU, Shock-index & Score MGAP) devrait être corrélée avec le niveau de l'établissement de destination selon le tableau suivant :
 
-\bigskip
 
-| Score           | Classe  | Destination idéale   | Destination IdF|
+| Score           | Classe  | Destination idéale   | Destination Val d'Oise|
 |-----------------|---------|---------------|-----------------|
 | **TRENAU**      | A       | Niveau 1      | Niveau 1 |
-|                 | B       | Niveau 2      | Niveau 3 |
+|                 | B       | Niveau 2      | Niveau 1 |
 |                 | C       | Niveau 3      | Niveau 3 |
 | ||||
-| **Shock-index** | $\geq$ 0,9| Niveau 1      | Niveau 1| 
-|                 | $<$ 0,9  | Niveau 2 ou 3 | Niveau 3 |
+| **Shock-index** | $\geq$ 0,9| Niveau 1 ou 2 | Niveau 1| 
+|                 | $<$ 0,9  | Niveau 3 | Niveau 3 |
 | ||||
 | **MGAP**        | $<$ 18    | Niveau 1      | Niveau 1 |
-|                 | 18 - 22 | Niveau 2      | Niveau 3 |
+|                 | 18 - 22 | Niveau 2      | Niveau 1 |
 |                 | 23 - 29 | Niveau 3      | Niveau 3 |
 
 \bigskip
 
-Des tests d’adéquation du $\Chi^2$ de Pearson permettra de mettre en évidence d'éventuels écarts, score par score, en comparant la répartition observée à une répartition idéale. Pour ces trois scores l'erreur majeure serait un sous triage c'est à dire un faux négatif (le diagnostic de la gravité du cas n'a pas été fait) donc le critère le plus important est la sensibilité qui sera présentée (package epiDisplay [@epid]) avec son intervalle de confiance (Méthode de Wilson avec, si besoin, correction de continuité) en comparant sous-triés vs normo-triés ou sur-triés. 
+Des tests d’adéquation du $\Chi^2$ de Pearson permettra de mettre en évidence d'éventuels écarts, score par score, en comparant la répartition observée à une répartition idéale. Pour ces trois scores l'erreur majeure serait un sous triage c'est à dire un faux négatif (le diagnostic de la gravité du cas n'a pas été fait) donc le critère le plus important est la sensibilité qui sera présentée (package epiDisplay [@epid]) avec son intervalle de confiance (Méthode de Wilson avec, si besoin, correction de continuité) en comparant sous-triés *vs* normo-triés ou sur-triés. 
 
 Des courbes ROC pourront être tracées pour chaque score (package pROC [@proc]) avec calcul de l'aire sous la courbe (AUC) pour comparer la qualité des scores.
 
