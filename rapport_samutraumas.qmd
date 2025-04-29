@@ -1,0 +1,45 @@
+---
+subtitle: "Rapport statistique V0.9"
+cache: true
+---
+
+
+```{r}
+#| label: info
+
+rm(list = ls())
+#
+library(corrplot)
+library(readODS)
+library(baseph)
+library(GGally)
+library(ggsci)
+library(ggstats)
+library(tidyverse)
+library(scales)
+library(ggridges)
+library(kableExtra)
+library(gtsummary)
+library(DataExplorer)
+library(colorspace)
+library(forestmodel)
+library(psych)
+library(fmsb)
+library(labelled)
+#
+classeur <- "samutrauams.ods"
+expx <- FALSE
+if (expx) {
+  file.create(classeur)
+  file.remove(classeur)
+  write_ods(iris, classeur)
+}
+
+# sessionInfo()
+theme_gtsummary_language(language = "fr", decimal.mark = ",")
+# theme_gtsummary_journal(journal = "jama")
+options(OutDec = ",")
+ptest <- list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test")
+#
+load("datas/samutraumas.RData")
+```
