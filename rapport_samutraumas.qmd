@@ -1,8 +1,7 @@
 ---
-subtitle: "Rapport statistique V0.1"
+subtitle: "Rapport statistique v0.1"
 cache: false
 ---
-
 
 ```{r}
 #| label: info
@@ -10,24 +9,17 @@ cache: false
 rm(list = ls())
 #
 library(corrplot)
-library(readODS)
 library(baseph)
-library(GGally)
 library(ggsci)
-library(ggstats)
+library(GGally)
 library(tidyverse)
-library(scales)
-library(ggridges)
 library(kableExtra)
 library(gtsummary)
-library(DataExplorer)
-library(colorspace)
 library(forestmodel)
-library(psych)
 library(fmsb)
 library(labelled)
 #
-classeur <- "samutrauams.ods"
+classeur <- "samutraumas.ods"
 expx <- FALSE
 if (expx) {
   file.create(classeur)
@@ -46,39 +38,114 @@ ptest <- list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test"
 
 # Qualité des données
 
+## Données manquantes
+
+## Corrélations anormales
+
+```{r}
+#| label: cor-prep
+
+corx <- function(prof, titx) {
+  tit <- paste0("Corrélations - ", titx)
+  prof |>
+    remove_constant() |>
+    mutate_if(is.factor, as.numeric) |>
+    dplyr::select(!id) |>
+    ggcorr(drop = TRUE, hjust = 0.9) +
+    scale_fill_continuous_sequential(palette = "Dark Mint") +
+    labs(
+      title = tit,
+      y = "n",
+      caption = "Corrélations. Validation interne du questionnaire."
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 14, face = "bold"),
+      plot.subtitle = element_text(size = 12),
+      axis.title.x = element_blank(),
+      legend.title = element_blank(),
+      axis.title.y = element_blank(), ,
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      legend.position = "right"
+    )
+}
+```
+
+### Régulation
+
+```{r}
+#| label: fig-corregul
+#| fig-cap: Corrélations internes - Régulation
+regulation |> 
+  dplyr::select(- id) |> 
+corx("Régulation")
+```
+
+### Régulation
+
+```{r}
+#| label: fig-corinter
+#| fig-cap: Corrélations internes - Intervention
+intervention |> 
+  dplyr::select(- id) |> 
+corx("Intervention")
+```
+
+### Destination
+
+```{r}
+#| label: fig-cordest
+#| fig-cap: Corrélations internes - Destination
+intervention |> 
+  dplyr::select(- id) |> 
+corx("Destination")
+```
+
 # Descriptif
 
-# Critère principal 
+Les données concernent `r nrow(tt)` & sont réparties sur trois fichiers :
+
+-   Régulation (`r ncol(regulation) - 1` variables)
+-   Intervention (`r ncol(intervention) - 1` variables)
+-   Destination (`r ncol(destination) - 1` variables)
+
+# Critère principal
 
 *Évaluation de l’orientation du patient traumatisé grave après bilan lésionnel post SMUR en sur trié, normo trié et sous trié.*
 
 # Critères secondaires
 
 ## Critère 1
+
 *Proportion de patients sous-triés sur les plages horaires.*
 
 ## Critère 2 & 3
+
 *Proportion de sous-triage chez les patients avec une intoxication alcoolique ou toxique supposée.*
 
-Vu le faible nombre de cas (une seule intoxication toxique) on regroupera les patients en un seul groupe `Intoxication alcoolique ou autre`.
+Vu le faible nombre de cas (une seule intoxication toxique) on regroupe les patients en un seul groupe `Intoxication alcoolique ou autre`.
 
 ## Critère 4
+
 *Corrélation entre le grade de TRENAU et le niveau du trauma center pour l’admission finale.*
 
 ## Critère 5
+
 *Nombre de patients avec un Shock-index positif lors de la prise en charge du SMUR orientés vers un trauma center de niveau 1.*
 
 ## Critère 6
+
 *Nombre de patients avec un Shock-index positif lors de la prise en charge du SMUR et ayant eu une transfusion sanguine intra-hospitalière.*
 
 # Technique
+
 L'analyse statistique a été réalisée avec le logiciel **R**[@rstat] & divers packages. Outre ceux cités dans le texte on a utilisé en particulier `tidyverse` [@tidy] & `baseph` [@baseph].
 
 Un dépôt GitHub a été utilisé qui ne comprend que le code & non les données ou résultats. Au besoin un faux tableau de données sera présenté pour permettre des tests.
 
-<https://github.com/philippemichel/SAMU-TRAUMA/>
+<https://github.com/philippemichel/SAMU-TRAUMAS/>
 
 \printglossaries
 
 \addcontentsline{toc}{chapter}{C. Bibliographie}
-
