@@ -36,7 +36,12 @@ rsconnect/
 *.pdf
 *.tex
 *.xlsx
+*.gl*
+*.ist
 doc/
 QTDublinIrish.otf
 SAMU-TRAUMA.Rproj
 _extensions
+
+/.quarto/
+

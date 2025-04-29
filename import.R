@@ -8,17 +8,22 @@
 #  ------------------------------------------------------------------------
 
 rm(list = ls())
-œ#
+#
 library(tidyverse)
 library(labelled)
 library(readODS)
 library(baseph)
 #
-regulation <- read_ods("datas/samutraumas.ods", sheet = "regulation")
-intervention <- read_ods("datas/samutraumas.ods", sheet = "intervention")
-destination <- read_ods("datas/samutraumas.ods", sheet = "destination")
+impf <- function(noo){
+  zz <- read_ods(read_ods("datas/samutraumas.ods", sheet = noo) |>
+                   janitor::clean_names() |>
+                   mutate(across(where(is.character), as.factor))
+                     }
+#
+regulation <- impf("regulation")
+intervention <- impf("intervention")
+destination <- impf("destination")
+#
 tt <- left_join(regulation,intervention)
 tt <- left_join(tt,destination) |>
 #
-  janitor::clean_names() |>
-  mutate(across(where(is.character), as.factor))

@@ -1,6 +1,6 @@
 ---
-subtitle: "Rapport statistique V0.9"
-cache: true
+subtitle: "Rapport statistique V0.1"
+cache: false
 ---
 
 
@@ -41,5 +41,44 @@ theme_gtsummary_language(language = "fr", decimal.mark = ",")
 options(OutDec = ",")
 ptest <- list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test")
 #
-load("datas/samutraumas.RData")
+# load("datas/samutraumas.RData")
 ```
+
+# Qualité des données
+
+# Descriptif
+
+# Critère principal 
+
+*Évaluation de l’orientation du patient traumatisé grave après bilan lésionnel post SMUR en sur trié, normo trié et sous trié.*
+
+# Critères secondaires
+
+## Critère 1
+*Proportion de patients sous-triés sur les plages horaires.*
+
+## Critère 2 & 3
+*Proportion de sous-triage chez les patients avec une intoxication alcoolique ou toxique supposée.*
+
+Vu le faible nombre de cas (une seule intoxication toxique) on regroupera les patients en un seul groupe `Intoxication alcoolique ou autre`.
+
+## Critère 4
+*Corrélation entre le grade de TRENAU et le niveau du trauma center pour l’admission finale.*
+
+## Critère 5
+*Nombre de patients avec un Shock-index positif lors de la prise en charge du SMUR orientés vers un trauma center de niveau 1.*
+
+## Critère 6
+*Nombre de patients avec un Shock-index positif lors de la prise en charge du SMUR et ayant eu une transfusion sanguine intra-hospitalière.*
+
+# Technique
+L'analyse statistique a été réalisée avec le logiciel **R**[@rstat] & divers packages. Outre ceux cités dans le texte on a utilisé en particulier `tidyverse` [@tidy] & `baseph` [@baseph].
+
+Un dépôt GitHub a été utilisé qui ne comprend que le code & non les données ou résultats. Au besoin un faux tableau de données sera présenté pour permettre des tests.
+
+<https://github.com/philippemichel/SAMU-TRAUMA/>
+
+\printglossaries
+
+\addcontentsline{toc}{chapter}{C. Bibliographie}
+
