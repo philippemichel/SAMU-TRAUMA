@@ -11,6 +11,7 @@ rm(list = ls())
 library(corrplot)
 library(baseph)
 library(ggsci)
+library(janitor)
 library(GGally)
 library(tidyverse)
 library(kableExtra)
@@ -77,6 +78,7 @@ corx <- function(prof, titx) {
 ```{r}
 #| label: fig-corregul
 #| fig-cap: Corrélations internes - Régulation
+#| eval: false
 regulation |> 
   dplyr::select(- id) |> 
 corx("Régulation")
@@ -87,6 +89,7 @@ corx("Régulation")
 ```{r}
 #| label: fig-corinter
 #| fig-cap: Corrélations internes - Intervention
+#| eval: false
 intervention |> 
   dplyr::select(- id) |> 
 corx("Intervention")
@@ -97,6 +100,8 @@ corx("Intervention")
 ```{r}
 #| label: fig-cordest
 #| fig-cap: Corrélations internes - Destination
+#| eval: false
+
 intervention |> 
   dplyr::select(- id) |> 
 corx("Destination")
@@ -104,11 +109,12 @@ corx("Destination")
 
 # Descriptif
 
-Les données concernent `r nrow(tt)` & sont réparties sur trois fichiers :
+Les données concernent r nrow(tt) & sont réparties sur trois fichiers :
 
--   Régulation (`r ncol(regulation) - 1` variables)
--   Intervention (`r ncol(intervention) - 1` variables)
--   Destination (`r ncol(destination) - 1` variables)
+-   Régulation (r ncol(regulation) - 1 variables)
+-   Intervention (r ncol(intervention) - 1 variables)
+-   Destination (r ncol(destination) - 1 variables)
+
 
 # Critère principal
 
@@ -146,6 +152,5 @@ Un dépôt GitHub a été utilisé qui ne comprend que le code & non les donnée
 
 <https://github.com/philippemichel/SAMU-TRAUMAS/>
 
-\printglossaries
 
 \addcontentsline{toc}{chapter}{C. Bibliographie}

@@ -34,7 +34,8 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 *.pdf
-*.tex
+generique.tex
+rapport*.tex
 *.xlsx
 *.gl*
 *.ist
