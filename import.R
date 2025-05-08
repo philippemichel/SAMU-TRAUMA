@@ -41,7 +41,7 @@ tt <- tt |>
 bn  <- read_ods("datas/samutrauma.ods", sheet = "bnom")
 var_label(tt) <- bn$nom
 #
-save(tt, bn, file = "datas/samutraumas.RData")
+save(tt, bn,regulation,intervention,destination,  file = "datas/samutraumas.RData")
 
 
 

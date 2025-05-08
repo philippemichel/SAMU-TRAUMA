@@ -39,9 +39,9 @@ tbl-cap-location: top
 classoption: [french]
 papersize: a4
 editor: source
-bibliography: stat.bib
-cite-method: biblatex
-csl: jama.csl
+#bibliography: stat.bib
+#cite-method: biblatex
+#csl: jama.csl
 #reference-location: margin
 #citation-location: margin
 license: "MIT"
