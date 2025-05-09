@@ -186,12 +186,14 @@ tt |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "princ1", lg = TRUE)
 ```
 
+## Population & PEC
+
 ```{r}
 #| label: tbl-reguldemog
-#| tbl-cap: Qualité du triage selon l'âge & le sexe du patient
+#| tbl-cap: Qualité du triage selon l a population & les circonstaces de prise en charge
 
 tt |> 
-  dplyr::select(age, sexe, triage) |> 
+  dplyr::select(age, sexe, triage,demande_vsav,intox) |> 
   tbl_summary(by = triage, 
               percent = "row",
               missing = "no") |> 
@@ -205,25 +207,227 @@ tt |>
 
 Il y a plus de sur-triage chez les hommes. 
 
+```{r}
+#| label: fig-trisexe
+#| fig-cap: Qualité du triage selon le sexe du patient
+
+tt |> 
+  dplyr::select(sexe, triage) |> 
+  drop_na() |>
+  ggplot(aes(x = sexe, fill = triage)) +
+  geom_bar(position = "fill") +
+  scale_color_jama() +
+  scale_y_continuous(labels = scales::percent_format(scale = 100)) +
+  labs(
+    title = "Proportion de sur-triage selon le sexe",
+    x = "Sexe",
+    y = "Proportion de sur-triage"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.x = element_blank(),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    legend.position = "right"
+  )
+```
+
+## Critères de Vittel
+
+```{r}
+#| label: tbl-vittel
+#| tbl-cap: Qualité du triage selon les critères de Vittel
+
+tt |> 
+  dplyr::select(triage, starts_with("vittel")) |> 
+  tbl_summary(by = triage, 
+              percent = "row",
+              missing = "no", 
+                value = list(vittel_examen_initial = "Oui",
+                          vittel_circonstance = "Oui",
+                          vittel_pec = "Oui",
+                          vittel_lesions = "Oui",
+                          vittel_caracteristiques = "Oui")
+    )|> 
+  add_n() |>
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  modify_footnote_header(" Les chiffres indiqués sont les réponses *Oui*",
+                                  columns = all_stat_cols(),
+  replace = FALSE,
+  text_interpret = c("md")
+)
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "vittel", lg = TRUE)
+```
+
+## Scores
+
+
+```{r}
+#| label: tbl-scores
+#| tbl-cap: Qualité du triage selon les scores
+
+tt |> 
+  dplyr::select(triage, trenau, shock_index, mgap) |> 
+  tbl_summary(by = triage, 
+              percent = "row",
+              missing = "no") |> 
+  add_n() |>
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "scores", lg = TRUE)
+```
+
+L'ISS ne peut être pris en compte vu le très faible nombre (3) de réponses.
+
 # Critères secondaires
 
 ## Critère 1
 
 *Proportion de patients sous-triés sur les plages horaires.*
 
+
+On défini les plages horaires comme suit :
+
+- 7h-9h & 18h-21h: Relève
+- 9h-18h: Jour
+- 21h-7h: Nuit
+
+```{r}
+#| label: tbl-horaires
+#| tbl-cap: Triage selon les plages horaires
+
+tt |> 
+  mutate(hor = as.numeric(hour(horaire))) |> 
+mutate(hor_rec = cut(hor,
+  include.lowest = TRUE,
+  right = FALSE,
+  dig.lab = 4,
+  breaks = c(0, 7, 9, 18, 21, 25),
+  labels = c("Nuit", "Relève", "Jour", "Relève", "Nuit"))) |> 
+  dplyr::select(hor_rec, triage) |>
+  tbl_summary(by = triage,, 
+              percent = "row",
+              missing = "no") |> 
+    add_n() |>
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "horaire", lg = TRUE)
+
+```
+
+On ne voit pas de différence dans la qualité du triage selon la plage horaire . 
+
 ## Critère 2 & 3
 
 *Proportion de sous-triage chez les patients avec une intoxication alcoolique ou toxique supposée.*
 
-Vu le faible nombre de cas (une seule intoxication toxique) on regroupe les patients en un seul groupe `Intoxication alcoolique ou autre`.
+Vu le faible nombre de cas (une seule intoxication toxique) on regroupe les patients en un seul groupe `Intoxication alcoolique ou autre`. 
+
+```{r}
+#| label: tbl-intox
+#| tbl-cap: Proportion de sous-triage chez les patients avec une intoxication alcoolique ou toxique supposée
+
+zz <- tt |> 
+mutate(triage_rec = fct_recode(triage,
+    "NORMO ou SUR-TRIAGE" = "NORMO",
+    "NORMO ou SUR-TRIAGE" = "SUR",
+    "SOUS-TRIAGE" = "SOUS"
+  )) 
+var_label(zz$triage_rec) <- "Qualité du triage"
+zz |> 
+  dplyr::select(triage_rec, intox) |> 
+  tbl_summary(by = triage_rec, 
+              percent = "row",
+              missing = "no") |> 
+      add_n() |>
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "intox", lg = TRUE)
+```
+
+```{r}
+#| label: fig-intox
+#| fig-cap: Proportion de sous-triage chez les patients avec une intoxication alcoolique ou toxique supposée
+
+zz |> 
+  dplyr::select(intox, triage_rec) |> 
+  drop_na() |>
+  ggplot(aes(x = intox, fill = triage_rec)) +
+  geom_bar(position = "fill") +
+  scale_color_jama() +
+  scale_y_continuous(labels = scales::percent_format(scale = 100)) +
+  labs(
+    title = "Proportion de sous-triage chez les patients avec une intoxication alcoolique ou toxique supposée",
+    x = "Intoxication supposée alcoolique ou autre",
+    y = "% sous-triage"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.x = element_text(size = 12),
+    legend.title = element_blank(),
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    legend.position = "right"
+  )
+rm(zz)
+```
+
 
 ## Critère 4
 
 *Corrélation entre le grade de TRENAU et le niveau du trauma center pour l’admission finale.*
 
+```{r}
+#| label: tbl-trenau
+#| tbl-cap: Corrélation entre le grade de TRENAU et le niveau du trauma center pour l’admission finale.
+
+destf <- function(d1,d2){
+  dd <- d1 
+  ww <- which(!is.na(d2))
+  dd[ww] <- d2[ww]
+  return(dd)
+}
+
+c <- destf(tt$niveau_tc_1,tt$niveau_tc_2) ## Recodage de c
+c <- c |>
+  fct_recode(
+    "Niveau 1" = "1",
+    "Niveau 3" = "3"
+  )
+
+
+tt |> 
+  mutate(nivfin = c) |> 
+  dplyr::select(trenau, nivfin) |>
+  tbl_summary(
+    by = nivfin,
+    missing = "no")|> 
+        add_n() |>
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**Destination Finale**") |> 
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "treneau", lg = TRUE)
+
+```
+
+
+
 ## Critère 5
 
 *Nombre de patients avec un Shock-index positif lors de la prise en charge du SMUR orientés vers un trauma center de niveau 1.*
+
+
 
 ## Critère 6
 
