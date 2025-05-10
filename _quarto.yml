@@ -1,5 +1,6 @@
 title: "SAMU-TRAUMAS"
 lang: fr
+date-format: "D MMM YYYY"
 author:
   - name: "Dr Philippe MICHEL"
     affiliations:
@@ -13,6 +14,7 @@ format:
   titlepage-include-file:
    - generique.tex
   documentclass: scrreprt
+  classoption: [french]
   number-sections: true
   titlepage-footer: "\\today"
 titlepage-theme:
@@ -36,12 +38,11 @@ lof: true
 lot: true
 fig-cap-location: bottom
 tbl-cap-location: top
-classoption: [french]
 papersize: a4
 editor: source
-#bibliography: stat.bib
-#cite-method: biblatex
-#csl: jama.csl
+bibliography: stat.bib
+cite-method: biblatex
+csl: jama.csl
 #reference-location: margin
 #citation-location: margin
 license: "MIT"

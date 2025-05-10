@@ -1,6 +1,5 @@
 ---
 subtitle: "Rapport statistique v1.0"
-cache: false
 ---
 
 ```{r}
@@ -115,8 +114,8 @@ Les données concernent `r nrow(tt)` cas & sont réparties sur trois fichiers :
 #| label: tbl-regul
 #| tbl-cap: Description de la population - Régulation
 
-regulation |> 
-  dplyr::select(-id) |> 
+tt |> 
+  dplyr::select(sexe, age) |> 
   tbl_summary() |> 
   add_n() |>
   bold_labels() |>
@@ -159,9 +158,9 @@ tt |>
 #| label: tbl-desti
 #| tbl-cap: Description de la population - Destination
 
-destination |> 
-  dplyr::select(-c(id, triage, starts_with("destination"))) |> 
-  tbl_summary() |> 
+tt |> 
+  dplyr::select(starts_with("niveau")) |> 
+  tbl_summary(missing = "no") |> 
   add_n() |>
   bold_labels() |>
   modify_header(label ~ " ") |>
@@ -185,6 +184,8 @@ tt |>
   modify_header(label ~ " ") |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "princ1", lg = TRUE)
 ```
+
+
 
 ## Population & PEC
 
@@ -260,7 +261,7 @@ tt |>
                                   columns = all_stat_cols(),
   replace = FALSE,
   text_interpret = c("md")
-)
+) |> 
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "vittel", lg = TRUE)
 ```
 
@@ -284,6 +285,8 @@ tt |>
 ```
 
 L'ISS ne peut être pris en compte vu le très faible nombre (3) de réponses.
+
+De manière prévisible ce sont les patients de gravité intermédiaires (TRENAU B) qui sont le plus souvent mal triés.
 
 # Critères secondaires
 
@@ -391,27 +394,12 @@ rm(zz)
 #| label: tbl-trenau
 #| tbl-cap: Corrélation entre le grade de TRENAU et le niveau du trauma center pour l’admission finale.
 
-destf <- function(d1,d2){
-  dd <- d1 
-  ww <- which(!is.na(d2))
-  dd[ww] <- d2[ww]
-  return(dd)
-}
-
-c <- destf(tt$niveau_tc_1,tt$niveau_tc_2) ## Recodage de c
-c <- c |>
-  fct_recode(
-    "Niveau 1" = "1",
-    "Niveau 3" = "3"
-  )
-
-
 tt |> 
-  mutate(nivfin = c) |> 
   dplyr::select(trenau, nivfin) |>
   tbl_summary(
     by = nivfin,
-    missing = "no")|> 
+    missing = "no", 
+    percent = "row")|> 
         add_n() |>
   modify_spanning_header(c("stat_1", "stat_2") ~ "**Destination Finale**") |> 
   add_p() |>
@@ -421,25 +409,91 @@ tt |>
 
 ```
 
-
+Les TRENAU A et B sont orientés de la même manière. 
 
 ## Critère 5
 
 *Nombre de patients avec un Shock-index positif lors de la prise en charge du SMUR orientés vers un trauma center de niveau 1.*
 
+```{r}
+#| label: tbl-si1
+#| tbl-cap: Patients avec un Shock-index positif  orientés vers un trauma center de niveau 1
+
+tt |> 
+  dplyr::select(shock,niveau_tc_1) |> 
+  tbl_summary(
+    by = niveau_tc_1,
+    missing = "no",
+    percent = "row") |>
+          add_n() |>
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**Destination Finale**") |> 
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "shock1", lg = TRUE)
+
+```
 
 
 ## Critère 6
 
 *Nombre de patients avec un Shock-index positif lors de la prise en charge du SMUR et ayant eu une transfusion sanguine intra-hospitalière.*
 
+```{r}
+#| label: tbl-transfu
+#| tbl-cap: Patients avec un Shock-index positif lors de la prise en charge du SMUR et ayant eu une transfusion sanguine intra-hospitalière.
+
+tt |> 
+  dplyr::select(shock,transfusion_sanguine) |> 
+  tbl_summary(
+    by = transfusion_sanguine,
+    missing = "no", 
+    percent = "row") |>
+          add_n() |>
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**Transfusion sanguine**") |> 
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "transfu", lg = TRUE)
+```
+
+Vu le très faible nombre de patients ayant eu une transfusion sanguine intra-hospitalière, il n'est pas possible de conclure.
+
+
+## Critère 7
+*Nombre de patients ayant un score de MGAP  entre 23 et 29 et une admission in fine dans un trauma center de niveau 3.*
+
+*Nombre de patients ayant un score de MGAP <18 et une admission in fine dans un trauma center de niveau 1*
+
+```{r}
+#| label: tbl-mgap
+#| tbl-cap: Score MGAP & destination finale
+
+
+tt |> 
+  dplyr::select(mgap, nivfin) |> 
+  tbl_summary(
+    by = nivfin,
+    missing = "no",
+    percent = "row") |>
+          add_n() |>
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**Destination Finale**") |> 
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "mgap", lg = TRUE)
+```
+
+Les scores MGAP *intermédiaires* (qui auraient du être orientés vers un trauma center de niveau 2) sont souvent orientés vers un trauma center de niveau 1.
+
+
 # Technique
 
-L'analyse statistique a été réalisée avec le logiciel **R**[rstat] & divers packages. Outre ceux cités dans le texte on a utilisé en particulier `tidyverse` [tidy] & `baseph` [baseph].
+L'analyse statistique a été réalisée avec le logiciel **R**[@rstat] & divers packages. Outre ceux cités dans le texte on a utilisé en particulier `tidyverse` [@tidy] & `baseph` [@baseph].
 
 Un dépôt GitHub a été utilisé qui ne comprend que le code & non les données ou résultats. Au besoin un faux tableau de données sera présenté pour permettre des tests.
 
 <https://github.com/philippemichel/SAMU-TRAUMAS/>
 
 
-\addcontentsline{toc}{chapter}{C. Bibliographie}
+\addcontentsline{toc}{chapter}{Bibliographie}
