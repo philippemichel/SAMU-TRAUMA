@@ -6,14 +6,16 @@ subtitle: "Rapport statistique v1.0"
 #| label: info
 
 rm(list = ls())
-load("datas/samutraumas.RData")
 #
 library(corrplot)
 library(baseph)
 library(ggsci)
+library(readODS)
 library(janitor)
 library(visdat)
 library(GGally)
+library(epiDisplay)
+library(plotROC)
 library(tidyverse)
 library(kableExtra)
 library(gtsummary)
@@ -22,7 +24,7 @@ library(fmsb)
 library(labelled)
 #
 classeur <- "samutraumas.ods"
-expx <- FALSE
+expx <- TRUE
 if (expx) {
   file.create(classeur)
   file.remove(classeur)
@@ -37,6 +39,8 @@ ptest <- list(all_continuous() ~ "wilcox.test", all_categorical() ~ "chisq.test"
 #
 load("datas/samutraumas.RData")
 ```
+
+
 
 
 
@@ -79,11 +83,11 @@ corx <- function(prof, titx) {
 #| fig-cap: Corrélations internes
 #| eval: true
 tt |> 
-#  dplyr::select(-id) |> 
+  dplyr::select(!starts_with("destin")) |> 
 corx("")
 ```
 
-Les seules corrélations inattendues & potentiellement gênantes sont celles entre `vittel_circonstance`, `vittel_pec` & `iss_tranche`. 
+Les seules corrélations inattendues & potentiellement gênantes sont celles entre `vittel_circonstance`, `vittel_pec` & `iss_tranche`. À noter, de fortes corrélations entre la transfusion sanguine & l'âge,Vittel (circonstance & examen initial) qui seraient à étudier mais les très faibles effectifs rendent probable de faux résultats. 
 
 ## Données manquantes
 
@@ -96,11 +100,16 @@ tt |>
 vis_dat(palette = "qual")
 ```
 
-Le score ISS est très mal documenté. 
+Le score ISS est très mal documenté.
+
+Il y a quatre données manquantes sur la variaible de tri principale `Triage`.
 
 # Descriptif
 
-Pour tous les tableaux, en cas de réponse en Oui/Non, seule la réponse `Oui` est affichée.
+::: {.callout-note}
+Dans tous les tableaux, pour les variables en `Oui/Non` seules les réponses `Oui` sont affichées.
+:::
+
 
 Les données concernent `r nrow(tt)` cas & sont réparties sur trois fichiers :
 
@@ -115,16 +124,23 @@ Les données concernent `r nrow(tt)` cas & sont réparties sur trois fichiers :
 #| tbl-cap: Description de la population - Régulation
 
 tt |> 
-  dplyr::select(sexe, age) |> 
-  tbl_summary() |> 
+  dplyr::select(sexe, age, intox) |> 
+  tbl_summary(value = list(intox = "Oui"))|> 
   add_n() |>
   bold_labels() |>
   modify_header(label ~ " ") |>
-  pexptabph(exp = expx, nomfich = classeur, nomsheet = "regul", lg = TRUE)
+ pexptabph(exp = expx, nomfich = classeur, nomsheet = "regul", lg = TRUE)
 ```
 
+```{r}
+#| label: fig-pyr
+#| fig-cap: Pyramide des âges
 
+pyramid(tt$age,tt$sexe, col.gender = c("pink", "lightblue"), main = "Pyramide des âges") 
 
+```
+
+On retrouve la prédominance masculine & le jeune âge des patients, habituels en traumatologie, ce qui valide la qualité de l'échantillon.
 
 ## Intervention
 
@@ -149,23 +165,74 @@ tt |>
   add_n() |>
   bold_labels() |>
   modify_header(label ~ " ") |>
-  pexptabph(exp = expx, nomfich = classeur, nomsheet = "regul", lg = TRUE)
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "interv", lg = TRUE)
 ```
+
+
+```{r}
+#| label: fig-vittel
+#| fig-cap: Critères de Vittel
+
+
+tt |> 
+  dplyr::select(starts_with("vittel")) |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "item",
+    values_to = "value"
+  ) |> 
+mutate(item = fct_recode(item,
+    "Caractéristiques" = "vittel_caracteristiques",
+    "Circonstance" = "vittel_circonstance",
+    "Examen initial" = "vittel_examen_initial",
+    "Lésions" = "vittel_lesions",
+    "PEC" = "vittel_pec")) |>
+      dplyr::filter(value == "Oui") |> 
+      ggplot() +
+      aes(x = fct_infreq(item), fill = item) +
+      geom_bar(stat = "count") +
+      labs(title = "Critères de Vittel",
+           subtitle = "Fréquence dans la population",
+           x = "",
+           y = "n",
+           caption = "",
+           fill = "") +
+      theme_light() +
+      scale_fill_jama() +
+      theme(
+        plot.title = element_text(size = 14, face = "bold"),
+        plot.subtitle = element_text(size = 12),
+        axis.title.x = element_blank(),
+        legend.title = element_text(size = 12),
+        axis.title.y = element_text(
+          size = 12,
+          angle = 0,
+          vjust = .5
+        ),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        legend.position = "none"
+      )
+```
+
 
 ## Destination
 
 ```{r}
 #| label: tbl-desti
-#| tbl-cap: Description de la population - Destination
+#| tbl-cap: Destination finale selon la première orientation
 
 tt |> 
-  dplyr::select(starts_with("niveau")) |> 
-  tbl_summary(missing = "no") |> 
+  dplyr::select(niveau_tc_1, nivfin) |> 
+  tbl_summary(by = nivfin,
+              missing = "no") |> 
   add_n() |>
   bold_labels() |>
   modify_header(label ~ " ") |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "desti", lg = TRUE)
 ```
+
+11 % des patients transportés en première intention en niveau 1 ont du être transférés secondairement en niveau 3. 
 
 
 # Critère principal
@@ -174,15 +241,50 @@ tt |>
 
 ```{r}
 #| label: tbl-princ1
-#| tbl-cap: titre
+#| tbl-cap: Qualité de l'orientation du patient traumatisé grave
 
 tt |> 
   dplyr::select(triage) |> 
-  tbl_summary( ) |> 
+  tbl_summary( missing = "no") |> 
    add_n() |>
   bold_labels() |>
   modify_header(label ~ " ") |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "princ1", lg = TRUE)
+```
+
+```{r}
+#| label: fig-crit1
+#| fig-cap: Qualité de l'orientation du patient traumatisé grave
+
+tt |> 
+  dplyr::select(triage) |> 
+  drop_na() |>
+  ggplot() +
+  aes(x =triage, fill = triage) +
+   geom_bar(stat = "count") +
+  labs(title = "Qualité de l'orientation du patient traumatisé grave",
+      subtitle = "",
+      x = "",
+      y = "n",
+      caption = "",
+      fill = "") +
+  theme_light() +
+  scale_fill_jama() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    axis.title.y = element_text(
+      size = 12,
+      angle = 90,
+      vjust = .5
+    ),
+  axis.text.x = element_text(size = 12),
+  axis.text.y = element_text(size = 12),
+  legend.position = "none"
+  )
+
 ```
 
 
@@ -191,7 +293,7 @@ tt |>
 
 ```{r}
 #| label: tbl-reguldemog
-#| tbl-cap: Qualité du triage selon l a population & les circonstaces de prise en charge
+#| tbl-cap: Qualité du triage selon la population & les circonstaces de prise en charge
 
 tt |> 
   dplyr::select(age, sexe, triage,demande_vsav,intox) |> 
@@ -265,6 +367,49 @@ tt |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "vittel", lg = TRUE)
 ```
 
+```{r}
+#| label: fig-triagevittel
+#| fig-cap: Qualité du triage selon les critères de Vittel
+
+tt |> 
+  dplyr::select(triage, starts_with("vittel")) |> 
+  pivot_longer(
+    cols = starts_with("vittel"),
+    names_to = "item",
+    values_to = "value"
+  ) |>
+    mutate(item = fct_recode(item,
+                               "Caractéristiques" = "vittel_caracteristiques",
+                               "Circonstance" = "vittel_circonstance",
+                               "Examen initial" = "vittel_examen_initial",
+                               "Lésions" = "vittel_lesions",
+                               "PEC" = "vittel_pec"
+      )) |> 
+  dplyr::filter(value == "Oui") |>
+    ggplot(aes(x = item, fill = triage)) +
+  geom_bar(position = "fill") +
+  scale_color_jama() +
+  scale_y_continuous(labels = scales::percent_format(scale = 100)) +
+  labs(
+    title = "Proportion de sur-triage selon le sexe",
+    x = "Sexe",
+    y = "Proportion de sur-triage"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title.x = element_blank(),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    legend.position = "right"
+  )
+
+```
+
+Les critères `caractéristiques` & `circonstance` semblent être de meilleurs prédicteurs de la qualité du triage.
+
 ## Scores
 
 
@@ -273,7 +418,7 @@ tt |>
 #| tbl-cap: Qualité du triage selon les scores
 
 tt |> 
-  dplyr::select(triage, trenau, shock_index, mgap) |> 
+  dplyr::select(triage, trenau, shock_index,shock, mgap_cut) |> 
   tbl_summary(by = triage, 
               percent = "row",
               missing = "no") |> 
@@ -368,13 +513,13 @@ zz |>
   scale_color_jama() +
   scale_y_continuous(labels = scales::percent_format(scale = 100)) +
   labs(
-    title = "Proportion de sous-triage chez les patients avec une intoxication alcoolique ou toxique supposée",
-    x = "Intoxication supposée alcoolique ou autre",
+    title = "Proportion de sous-triage chez les patients avec une\n intoxication alcoolique ou toxique supposée",
+    x = "Intoxication supposée",
     y = "% sous-triage"
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(size = 14, face = "bold"),
+    plot.title = element_text(size = 12, face = "bold"),
     axis.title.x = element_text(size = 12),
     legend.title = element_blank(),
     axis.title.y = element_text(size = 12),
@@ -390,11 +535,19 @@ rm(zz)
 
 *Corrélation entre le grade de TRENAU et le niveau du trauma center pour l’admission finale.*
 
+En l'absence de TC de niveau 2 dans la région les patients TRENAU B devraient être orientés vers un TC de niveau 1.
+
 ```{r}
 #| label: tbl-trenau
 #| tbl-cap: Corrélation entre le grade de TRENAU et le niveau du trauma center pour l’admission finale.
 
+
 tt |> 
+  ## Recodage de tt$trenau
+mutate(trenau = fct_recode(trenau,
+    "A+B" = "A",
+    "A+B" = "B"
+  )) |> 
   dplyr::select(trenau, nivfin) |>
   tbl_summary(
     by = nivfin,
@@ -406,10 +559,9 @@ tt |>
   bold_labels() |>
   modify_header(label ~ " ") |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "treneau", lg = TRUE)
-
 ```
 
-Les TRENAU A et B sont orientés de la même manière. 
+Un quart des patients TRENAU A ou B ont été sur-triès. 
 
 ## Critère 5
 
@@ -433,6 +585,61 @@ tt |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "shock1", lg = TRUE)
 
 ```
+
+### Recherche d'un seuil
+
+On cherche le seuil *idéal* pour trier les patients entre un TC de niveau 1 & un TC de niveau 3.
+
+```{r}
+#| label: fig-rocshok
+#| fig-cap: Prédiction de l'orientation finale par le Shock-Index
+#| fig-asp: 1
+
+bb <- tt |> 
+  drop_na(nivfin) |> 
+  ## Réordonnancement de tt$nivfin
+  mutate(nivfin =fct_relevel(nivfin,
+    "Niveau 3", "Niveau 1"
+  )) |> 
+  ggplot() + 
+  aes(d = nivfin, m = shock_index) +
+  geom_roc(increasing = FALSE) +
+style_roc(theme = theme_light,
+          minor.breaks = seq(0, 1, by = 0.05)) +
+#  geom_rocci(sig.level = .05, ci.at = 0.7) +
+geom_abline(aes(intercept = 0, slope  = 1), linetype = 2, color = "grey50") +
+  ggtitle("Prédiction de l'orientation finale par le Shock-Index") 
+aucx <- paste("AUC =", round(calc_auc(bb)$AUC, 2))
+bb +
+  annotate("text", x = .85, y = .2, size = 4,
+           label = aucx)
+```
+
+
+
+Le shock-index utilisé seul est un mauvais prédicateur de l'orientation finale (`r aucx`). Néanmoins le *meilleur* seuil serait autour de 0,7 mais l'échantillon est trop petit pour conclure & le design de l'étude inadapté
+
+```{r}
+#| label: tbl-shockmod
+#| tbl-cap: Prédiction de l'orientation finale par le Shock-Index (seuil à 0,7)
+
+tt |> 
+  mutate(shock = ifelse(shock_index > 0.7, "Positif", "Négatif")) |> 
+  dplyr::select(shock,niveau_tc_1) |> 
+  tbl_summary(
+    by = niveau_tc_1,
+    missing = "no",
+    percent = "row") |>
+          add_n() |>
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**Destination Finale**") |> 
+  add_p() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "shockmod", lg = TRUE)
+
+```
+
+
 
 
 ## Critère 6
@@ -469,9 +676,8 @@ Vu le très faible nombre de patients ayant eu une transfusion sanguine intra-ho
 #| label: tbl-mgap
 #| tbl-cap: Score MGAP & destination finale
 
-
 tt |> 
-  dplyr::select(mgap, nivfin) |> 
+  dplyr::select(mgap_cut, nivfin) |> 
   tbl_summary(
     by = nivfin,
     missing = "no",
@@ -484,7 +690,38 @@ tt |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "mgap", lg = TRUE)
 ```
 
-Les scores MGAP *intermédiaires* (qui auraient du être orientés vers un trauma center de niveau 2) sont souvent orientés vers un trauma center de niveau 1.
+Trois quarts des patients sont orientés correctement si on se fie uniquement au score MGAP. 
+
+### Recherche d'un seuil MGAP
+
+On cherche le seuil *idéal* pour trier les patients entre un TC de niveau 1 & un TC de niveau 3.
+
+```{r}
+#| label: fig-rocmgap
+#| fig-cap: Prédiction de l'orientation finale par le score MGAP
+#| fig-asp: 1
+
+bb <- tt |> 
+  drop_na(nivfin) |> 
+  ## Réordonnancement de tt$nivfin
+  mutate(nivfin =fct_relevel(nivfin,
+    "Niveau 3", "Niveau 1"
+  )) |> 
+  ggplot() + 
+  aes(d = nivfin, m = mgap) +
+  geom_roc(increasing = TRUE) +
+style_roc(theme = theme_light,
+          minor.breaks = seq(0, 1, by = 0.05))  +
+geom_abline(aes(intercept = 0, slope  = 1), linetype = 2, color = "grey50") +
+  ggtitle("Prédiction de l'orientation finale par le score MGAP") 
+aucx <- paste("AUC =", round(calc_auc(bb)$AUC, 2))
+bb +
+  annotate("text", x = .85, y = .2, size = 4,
+           label = aucx)
+```
+
+La prédiction demeure médiocre (`r aucx`. Le *meilleur* seuil semble se confirmer autour de 29 mais l'échantillon est trop petit pour conclure & le design de l'étude inadapté.
+
 
 
 # Technique
