@@ -39,6 +39,9 @@ tt <- left_join(regulation, intervention)
 tt <- left_join(tt, destination)
 tt <- tt |>
   remove_constant() |>
+  dplyr::filter(id != 110) |>
+  dplyr::filter(id != 404) |>
+  dplyr::filter(id != 458) |>
   mutate(horaire = hms(horaire)) |>
   mutate(intox = as.factor(ifelse((intox_oh == "Oui") | (intox_toxique == "Oui"), "Oui", "Non"))) |>
   relocate(intox, .after = demande_vsav) |>
@@ -52,7 +55,7 @@ tt <- tt |>
     right = FALSE,
     dig.lab = 4,
     breaks = c(0, 23, 30),
-    labels = c("MGAP < 23", "MGAP ≥ 23")
+    labels = c("MGAP < 23", "MGAP 23 et +")
   )) |>
   relocate(mgap_cut, .after = mgap) |>
   ## Recodage de tt$triage en tt$triage_rec
