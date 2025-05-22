@@ -1,5 +1,5 @@
 ---
-subtitle: "Rapport statistique v1.1"
+subtitle: "Rapport statistique v1.2"
 ---
 
 ```{r}
@@ -16,6 +16,7 @@ library(visdat)
 library(GGally)
 library(epiDisplay)
 library(plotROC)
+library(emmeans)
 library(tidyverse)
 library(kableExtra)
 library(gtsummary)
@@ -108,9 +109,8 @@ tt |>
   vis_dat(palette = "qual")
 ```
 
-Le score ISS est très mal documenté.
 
-Il y a quatre données manquantes sur la variaible de tri principale `Triage`.
+Il y a trois données manquantes sur la variable de tri principale `Triage`. Le score ISS demeure mal renseigné en particulier pour tous les patients transportés en première intention en TC niveau 3 la donnée est absente.
 
 # Descriptif
 
@@ -228,7 +228,7 @@ tt |>
   )
 ```
 
-
+\newpage
 ## Destination
 
 ```{r}
@@ -239,15 +239,17 @@ tt |>
   dplyr::select(niveau_tc_1, nivfin) |>
   tbl_summary(
     by = nivfin,
+    percent = "row",
     missing = "no"
   ) |>
+   modify_spanning_header(c("stat_1", "stat_2") ~ "**Destination finale**") |>
   add_n() |>
   bold_labels() |>
   modify_header(label ~ " ") |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "desti", lg = TRUE)
 ```
 
-11 % des patients transportés en première intention en niveau 1 ont du être transférés secondairement en niveau 3. 
+4 % des patients transportés en première intention en niveau 3 ont du être transférés secondairement en niveau 1. 
 
 
 # Critère principal
@@ -341,6 +343,7 @@ zz |>
     percent = "row",
     missing = "no"
   ) |>
+  modify_spanning_header(paste0("stat_", 1:3) ~ "**Qualité du triage**") |>
   add_n() |>
   add_p() |>
   bold_labels() |>
@@ -348,7 +351,22 @@ zz |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "reguldemog", lg = TRUE)
 ```
 
-`r 000`. Il y a plus de sur-triage chez les hommes. 
+`r llf`. Il y a plus de sur-triage chez les hommes par rapport au normo-triage.
+
+```{r}
+#| label: tbl-sexe
+#| tbl-cap: Qualité du triage selon le sexe du patient
+
+ll <- glm(sexe~triage, data =tt, family = {binomial})
+llem <- emmeans(ll, "triage")
+pairs(llem, name = "Qualité du triage") |> 
+  kbl(longtable = TRUE, booktabs = TRUE) |>
+      kable_styling(latex_options = c("scale_down", "repeat_header")) |> 
+  row_spec(0, bold = TRUE) |> 
+  footnote(general = "Test de Dunn. ",general_title = "")
+
+```
+
 
 ```{r}
 #| label: fig-trisexe
@@ -410,6 +428,7 @@ zz |>
       vittel_caracteristiques = "Oui"
     )
   ) |>
+    modify_spanning_header(paste0("stat_", 1:3) ~ "**Qualité du triage**") |>
   add_n() |>
   add_p() |>
   bold_labels() |>
@@ -421,6 +440,106 @@ zz |>
   ) |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "vittel", lg = TRUE)
 ```
+
+```{r}
+#| label: tbl-vitell1
+#| tbl-cap: "Qualité du triage selon le critèresde Vittel: examen initial"
+
+ll <- glm(vittel_examen_initial~triage, data =tt, family = {binomial})
+llem <- emmeans(ll, "triage")
+pp <- pairs(llem, name = "Qualité du triage")
+pp |> 
+  kbl(longtable = TRUE, booktabs = TRUE) |>
+      kable_styling(latex_options = c("scale_down", "repeat_header")) |> 
+  row_spec(0, bold = TRUE) |> 
+  footnote(general = "Test de Dunn. ",general_title = "")
+ if (expx) {
+      pp |>
+        as_tibble() |>
+        write_ods(path = classeur, sheet = vittel1, append = TRUE)
+    }
+```
+
+```{r}
+#| label: fig-vittel1
+#| fig-cap: "Qualité du triage selon le critère de Vittel : examen initial"
+
+llem |> 
+  plot(comparisons = TRUE) +
+  labs(title = "Qualité du triage selon le critère de Vittel : examen initial",
+      subtitle = "",
+      x = "",
+      y = "",
+      caption = "Les barres bleues représentent les intervalles de confiance. \n Les flèches rouges indiquent les comparaisons entre eux. \n Si une flèche chevauche une flèche d’un autre groupe la différence n’est pas significative.",
+      fill = "") +
+  theme_light() +
+  scale_fill_jama() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    axis.title.y = element_text(
+      size = 12,
+      angle = 0,
+      vjust = .5
+    ),
+  axis.text.x = element_blank(),
+  axis.text.y = element_text(size = 12),
+  legend.position = "none"
+  )
+```
+
+```{r}
+#| label: tbl-vitell2
+#| tbl-cap: "Qualité du triage selon le critère de Vittel : Lésions"
+
+ll <- glm(vittel_lesions~triage, data =tt, family = {binomial})
+llem2 <- emmeans(ll, "triage")
+pp <- pairs(llem2, name = "Qualité du triage") 
+pp |> 
+  kbl(longtable = TRUE, booktabs = TRUE) |>
+      kable_styling(latex_options = c("scale_down", "repeat_header")) |> 
+  row_spec(0, bold = TRUE) |> 
+  footnote(general = "Test de Dunn. ",general_title = "critères de Vittel (examen initial)")
+ if (expx) {
+      pp |>
+        as_tibble() |>
+        write_ods(path = classeur, sheet = vittel2, append = TRUE)
+    }
+```
+
+```{r}
+#| label: fig-vittel2
+#| fig-cap: "Qualité du triage selon le critère de Vittel : Lésions"
+
+llem2 |> 
+  plot(comparisons = TRUE) +
+    labs(title = "Qualité du triage selon le critère de Vittel : Lésions",
+      subtitle = "",
+      x = "",
+      y = "",
+      caption = "Les barres bleues représentent les intervalles de confiance. \n Les flèches rouges indiquent les comparaisons entre eux. \n Si une flèche chevauche une flèche d’un autre groupe la différence n’est pas significative.",
+      fill = "") +
+  theme_light() +
+  scale_fill_jama() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    axis.title.y = element_text(
+      size = 12,
+      angle = 0,
+      vjust = .5
+    ),
+  axis.text.x = element_blank(),
+  axis.text.y = element_text(size = 12),
+   legend.position = "none"
+  )
+```
+
+
 
 ```{r}
 #| label: fig-triagevittel
@@ -470,7 +589,7 @@ Les critères `caractéristiques` & `circonstance` semblent être de meilleurs p
 #| label: scoresprepa
 
 zz <- tt |>
-  dplyr::select(triage, trenau, shock_index, shock, mgap_cut) |>
+  dplyr::select(triage, trenau:iss_tranche) |>
   drop_na(triage)
 llf <- ldf(zz)
 ```
@@ -491,12 +610,59 @@ zz |>
   ) |>
   add_n() |>
   add_p() |>
-  bold_labels() |>
+    modify_spanning_header(paste0("stat_", 1:3) ~ "**Qualité du triage**") |>bold_labels() |>
   modify_header(label ~ " ") |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "scores", lg = TRUE)
 ```
 
-L'ISS ne peut être pris en compte vu le très faible nombre (3) de réponses.
+```{r}
+#| label: tbl-llmgap
+#| tbl-cap: Qualité du triage selon le MGAP
+
+ll <- lm(mgap ~ triage, data =tt)
+llemm <- emmeans(ll, "triage")
+pp <- pairs(llemm, name = "Qualité du triage")
+pp |> 
+  kbl(longtable = TRUE, booktabs = TRUE) |>
+      kable_styling(latex_options = c("scale_down", "repeat_header")) |> 
+  row_spec(0, bold = TRUE) |> 
+  footnote(general = "Test de Dunn. ",general_title = "")
+ if (expx) {
+      pp |>
+        as_tibble() |>
+        write_ods(path = classeur, sheet = llmpag, append = TRUE)
+    }
+```
+
+```{r}
+#| label: fig-llmgap1
+#| fig-cap: Qualité du triage selon le MGAP
+
+llemm |> 
+  plot(comparisons = TRUE) +    labs(title = "Qualité du triage selon le MGAP",
+      subtitle = "",
+      x = "MGAP",
+      y = "",
+      caption = "Les barres bleues représentent les intervalles de confiance. \n Les flèches rouges indiquent les comparaisons entre eux. \n Si une flèche chevauche une flèche d’un autre groupe la différence n’est pas significative.",
+      fill = "") +
+  theme_light() +
+  scale_fill_jama() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    axis.title.y = element_text(
+      size = 12,
+      angle = 0,
+      vjust = .5
+    ),
+  axis.text.x = element_text(size = 12),
+  axis.text.y = element_text(size = 12),
+   legend.position = "none"
+  )
+```
+
 
 De manière prévisible ce sont les patients de gravité intermédiaires (TRENAU B) qui sont le plus souvent mal triés.
 
@@ -527,6 +693,7 @@ zz <- tt |>
   )) |>
   dplyr::select(hor_rec, triage) |>
   drop_na()
+  var_label(zz$hor_rec) <- "Horaire"
 llf <- ldf(zz)
 ```
 
@@ -537,21 +704,13 @@ llf <- ldf(zz)
 #| label: tbl-horaires
 #| tbl-cap: Triage selon les plages horaires
 
-tt |>
-  mutate(hor = as.numeric(hour(horaire))) |>
-  mutate(hor_rec = cut(hor,
-    include.lowest = TRUE,
-    right = FALSE,
-    dig.lab = 4,
-    breaks = c(0, 7, 9, 18, 21, 25),
-    labels = c("Nuit", "Relève", "Jour", "Relève", "Nuit")
-  )) |>
-  dplyr::select(hor_rec, triage) |>
+zz |>
   tbl_summary(
     by = triage, ,
     percent = "row",
     missing = "no"
   ) |>
+     modify_spanning_header(paste0("stat_", 1:3) ~ "**Qualité du triage**") |>
   add_n() |>
   add_p() |>
   bold_labels() |>
@@ -588,6 +747,7 @@ zz |>
     percent = "row",
     missing = "no"
   ) |>
+  modify_spanning_header(paste0("stat_", 1:2) ~ "**Qualité du triage**") |>
   add_n() |>
   add_p() |>
   bold_labels() |>
@@ -633,11 +793,11 @@ rm(zz)
 #| label: trenauprepa
 
 zz <- tt |>
-  mutate(trenau = fct_recode(trenau,
-    "A+B" = "A",
-    "A+B" = "B"
-  )) |>
-  dplyr::select(trenau, nivfin) |>
+  mutate(trenau2 = fct_recode(trenau,
+     "A+B" = "A",
+     "A+B" = "B"
+   )) |>
+  dplyr::select(trenau, trenau2, nivfin) |>
   drop_na()
 llf <- ldf(zz)
 ```
@@ -651,6 +811,7 @@ En l'absence de TC de niveau 2 dans la région les patients TRENAU B devraient �
 
 
 zz |>
+  dplyr::select(trenau, nivfin) |>
   tbl_summary(
     by = nivfin,
     missing = "no",
@@ -665,8 +826,6 @@ zz |>
 ```
 
 Un quart des patients TRENAU A ou B ont été sur-triès.  
-
-
 
 ## Critère 5
 
@@ -704,7 +863,7 @@ zz |>
 
 ### Recherche d'un seuil
 
-On cherche le seuil *idéal* pour trier les patients entre un TC de niveau 1 & un TC de niveau 3.
+On cherche le seuil *idéal* pour trier les patients entre un TC de niveau 1 & un TC de niveau 3. Pour cela on trace une courbe ROC & on calcule l'AUC (Aire sous la courbe). On considère habituellement qu'un AUC supérieur à 0,7 est acceptable, supérieur à 0,8 bon & supérieur à 0,9 excellent.
 
 ```{r}
 #| label: fig-rocshok
@@ -723,7 +882,9 @@ bb <- tt |>
   geom_roc(increasing = FALSE) +
   style_roc(
     theme = theme_light,
-    minor.breaks = seq(0, 1, by = 0.05)
+    minor.breaks = seq(0, 1, by = 0.05),
+        xlab = "1 - sécificité", 
+    ylab = "Sensibilité"
   ) +
   #  geom_rocci(sig.level = .05, ci.at = 0.7) +
   geom_abline(aes(intercept = 0, slope = 1), linetype = 2, color = "grey50") +
@@ -808,7 +969,7 @@ Vu le très faible nombre de patients ayant eu une transfusion sanguine intra-ho
 #| label: mgapprepa
 
 zz <- tt |> 
-  dplyr::select(mgap_cut, nivfin) |>
+  dplyr::select(mgap3, nivfin) |>
   drop_na()
 llf <- ldf(zz)
 ```
@@ -838,7 +999,7 @@ Trois quarts des patients sont orientés correctement si on se fie uniquement au
 
 ### Recherche d'un seuil MGAP
 
-On cherche le seuil *idéal* pour trier les patients entre un TC de niveau 1 & un TC de niveau 3.
+On cherche le seuil *idéal* pour trier les patients entre un TC de niveau 1 & un TC de niveau 3. Pour cela on trace une courbe ROC & on calcule l'AUC (Aire sous la courbe). On considère habituellement qu'un AUC supérieur à 0,7 est acceptable, supérieur à 0,8 bon & supérieur à 0,9 excellent.
 
 ```{r}
 #| label: fig-rocmgap
@@ -857,7 +1018,9 @@ bb <- tt |>
   geom_roc(increasing = TRUE) +
   style_roc(
     theme = theme_light,
-    minor.breaks = seq(0, 1, by = 0.05)
+    minor.breaks = seq(0, 1, by = 0.05), 
+    xlab = "1 - sécificité", 
+    ylab = "Sensibilité"
   ) +
   geom_abline(aes(intercept = 0, slope = 1), linetype = 2, color = "grey50") +
   ggtitle("Prédiction de l'orientation finale par le score MGAP")
@@ -869,7 +1032,7 @@ bb +
   )
 ```
 
-La prédiction demeure médiocre (`r aucx`. Le *meilleur* seuil semble se confirmer autour de 29 mais l'échantillon est trop petit pour conclure & le design de l'étude inadapté.
+La prédiction demeure médiocre (`r aucx`). Le *meilleur* seuil semble se confirmer autour de 29 mais l'échantillon est trop petit pour conclure & le design de l'étude inadapté.
 
 
 
@@ -877,9 +1040,12 @@ La prédiction demeure médiocre (`r aucx`. Le *meilleur* seuil semble se confir
 
 L'analyse statistique a été réalisée avec le logiciel **R**[@rstat] & divers packages. Outre ceux cités dans le texte on a utilisé en particulier `tidyverse` [@tidy] & `baseph` [@baseph].
 
-Un dépôt GitHub a été utilisé qui ne comprend que le code & non les données ou résultats. Au besoin un faux tableau de données sera présenté pour permettre des tests.
+Le seuil de signification $\alpha$ a été fixé à \num{0.05} & la puissance à \num{0.8}. 
 
-<https://github.com/philippemichel/SAMU-TRAUMAS/>
+Pour les variables continues les comparaisons entre trois classes (par exemple qualité du triage) ont été réalisées avec le test de Kruskal-Wallis -- ANOVA unidirectionnelle sur rangs) pour les variables continues.  Si ces tests montraient une différence significative des comparaisons des niveaux deux à deux ou tests post-hoc pouvaient être réalisées (test de Dunn avec ajustement par la méthode de Bonferroni pour comparaisons multiples). Les comparaisons entre deux classes ont été réalisées avec le test de Wilcoxon. L'étude des variables discrètes a été réalisée avec le test du Chi-deux de Pearson. 
+
+L'analyse statistique a été réalisée avec le logiciel **R**[@rstat].
+
 
 
 \addcontentsline{toc}{chapter}{Bibliographie}

@@ -50,14 +50,28 @@ tt <- tt |>
   mutate(shock = ifelse(shock_index > 0.899, "Positif", "Négatif")) |>
   relocate(shock, .after = shock_index) |>
   mutate(across(starts_with("niveau_"), ~ fct_recode(., "Niveau 1" = "1", "Niveau 3" = "3"))) |>
-  mutate(mgap_cut = cut(mgap,
+  mutate(mgap3 = cut(mgap,
     include.lowest = TRUE,
     right = FALSE,
     dig.lab = 4,
-    breaks = c(0, 23, 30),
-    labels = c("MGAP < 23", "MGAP 23 et +")
+    breaks = c(0, 18, 23, 30),
+    labels = c("MGAP < 18", "MGAP 18-23", "MGAP 23 et +")
   )) |>
-  relocate(mgap_cut, .after = mgap) |>
+  mutate(mgap2 = fct_recode(mgap3,
+    "MGAP < 23" = "MGAP < 18",
+    "MGAP < 23" = "MGAP 18-23",
+    "MGAP 23 et +" = "MGAP 23 et +"
+  )) |>
+  relocate(mgap2, .after = mgap) |>
+  relocate(mgap3, .after = mgap2) |>
+  ## Recodage de tt$iss_score en tt$iss_score_tranche
+  mutate(iss_tranche = cut(iss_score,
+    include.lowest = TRUE,
+    right = TRUE,
+    dig.lab = 4,
+    breaks = c(0, 15, 76),
+    labels = c("ISS < 15", "ISS 15 et +")
+  )) |>
   ## Recodage de tt$triage en tt$triage_rec
   mutate(triage = fct_recode(triage,
     "Normo-triage" = "NORMO",
@@ -68,8 +82,8 @@ tt <- tt |>
 c <- destf(tt$niveau_tc_1, tt$niveau_tc_2)
 tt$nivfin <- c |>
   fct_recode(
-    "Niveau 1" = "1",
-    "Niveau 3" = "3"
+    "TC niveau 1" = "Niveau 1",
+    "TC niveau 3" = "Niveau 3"
   )
 # bn
 bn <- read_ods("datas/samutrauma.ods", sheet = "bnom")
