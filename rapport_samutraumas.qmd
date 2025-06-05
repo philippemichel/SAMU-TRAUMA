@@ -25,7 +25,7 @@ library(fmsb)
 library(labelled)
 #
 classeur <- "samutraumas.ods"
-expx <- FALSE
+expx <- TRUE
 if (expx) {
   file.create(classeur)
   file.remove(classeur)
@@ -222,7 +222,7 @@ tt |>
       angle = 0,
       vjust = .5
     ),
-    axis.text.x = element_text(size = 12),
+    axis.text.x = element_text(size = 10, angle = 20, hjust = 0.8),
     axis.text.y = element_text(size = 12),
     legend.position = "none"
   )
@@ -475,6 +475,9 @@ zz |>
   pexptabph(exp = expx, nomfich = classeur, nomsheet = "vittel", lg = TRUE)
 ```
 
+Les tests post-hoc qui comparent pour un item les différentes réponses n'ont de sens que s'il existe une différence significative globale c'est à dire pour les items `Examen initial` & `Lésions`.
+
+
 ```{r}
 #| label: tbl-vitell1
 #| tbl-cap: "Qualité du triage selon le critèresde Vittel: examen initial"
@@ -490,17 +493,17 @@ pp |>
  if (expx) {
       pp |>
         as_tibble() |>
-        write_ods(path = classeur, sheet = vittel1, append = TRUE)
+        write_ods(path = classeur, sheet = "vittel1", append = TRUE)
     }
 ```
 
 ```{r}
 #| label: fig-vittel1
-#| fig-cap: "Qualité du triage selon le critère de Vittel : examen initial"
+#| fig-cap: "Qualité du triage selon le critère de Vittel -- Examen initial"
 
 llem |> 
   plot(comparisons = TRUE) +
-  labs(title = "Qualité du triage selon le critère de Vittel : examen initial",
+  labs(title = "Qualité du triage selon le critère de Vittel \n examen initial",
       subtitle = "",
       x = "",
       y = "",
@@ -539,17 +542,17 @@ pp |>
  if (expx) {
       pp |>
         as_tibble() |>
-        write_ods(path = classeur, sheet = vittel2, append = TRUE)
+        write_ods(path = classeur, sheet = "vittel2", append = TRUE)
     }
 ```
 
 ```{r}
 #| label: fig-vittel2
-#| fig-cap: "Qualité du triage selon le critère de Vittel : Lésions"
+#| fig-cap: "Qualité du triage selon le critère de Vittel -- Lésions"
 
 llem2 |> 
   plot(comparisons = TRUE) +
-    labs(title = "Qualité du triage selon le critère de Vittel : Lésions",
+    labs(title = "Qualité du triage selon le critère de Vittel \n Lésions",
       subtitle = "",
       x = "",
       y = "",
@@ -664,7 +667,7 @@ pp |>
  if (expx) {
       pp |>
         as_tibble() |>
-        write_ods(path = classeur, sheet = llmpag, append = TRUE)
+        write_ods(path = classeur, sheet = "llmpag", append = TRUE)
     }
 ```
 

@@ -19,7 +19,8 @@
 
 **10/10/2024** Plan d'analyse des données v1.0
 
-**29/04/2025** Rapport statistique v.1.0
+**05/06/2025** Rapport statistique v.1.2
+
 ## Fichiers
 
 - **_quarto.yml** : entête en yaml & $\LaTeX$ pour les fichiers Quarto
