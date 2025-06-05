@@ -240,7 +240,8 @@ tt |>
   tbl_summary(
     by = nivfin,
     percent = "row",
-    missing = "no"
+    missing = "no",
+    label = list(niveau_tc_1 = "Destination initiale")
   ) |>
    modify_spanning_header(c("stat_1", "stat_2") ~ "**Destination finale**") |>
   add_n() |>
@@ -273,7 +274,8 @@ llf <- ldf(zz)
 
 
 zz |>
-  tbl_summary(missing = "no") |>
+  tbl_summary(missing = "no",
+              label = list(triage = "Qualité du triage")) |>
   add_n() |>
   bold_labels() |>
   modify_header(label ~ " ") |>
@@ -317,6 +319,38 @@ tt |>
     legend.position = "none"
   )
 ```
+
+## ISS non renseignés
+
+```{r}
+#| label: iss1prepa
+
+issn <-  which(is.na(tt$iss_score & tt$niveau_tc_1 == "Niveau 1" ))
+```
+
+On considère que tous les patients orientés d’emblée en niveau 1 & dont l'ISS n'a pas été renseigné sont sur triés soit `r length(issn)` cas.
+
+```{r}
+#| label: tbl-iss1
+#| tbl-cap: Qualité du triage (ISS non renseignés adressés en TC 1 considérés comme sur-triés)
+
+zz <- tt$triage
+zz[issn] = "Sur-triage"
+zz <- tt |> 
+  mutate(triage2 = zz) |> 
+  dplyr::select(triage2) |> 
+    drop_na(triage2)
+llf <- ldf(zz)
+
+zz |>
+  tbl_summary(missing = "no",
+              label = list(triage2 = "Qualité du triage")) |>
+  add_n() |>
+  bold_labels() |>
+  modify_header(label ~ " ") |>
+  pexptabph(exp = expx, nomfich = classeur, nomsheet = "princiss", lg = TRUE)
+```
+
 
 
 
@@ -581,7 +615,7 @@ tt |>
   )
 ```
 
-Les critères `caractéristiques` & `circonstance` semblent être de meilleurs prédicteurs de la qualité du triage.
+Les critères `Examen initial` & `Lésion` semblent être de meilleurs prédicteurs de la qualité du triage.
 
 ## Scores
 
