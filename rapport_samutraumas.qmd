@@ -1,5 +1,6 @@
 ---
 subtitle: "Rapport statistique v1.3"
+
 ---
 
 ```{r}
@@ -15,7 +16,6 @@ library(janitor)
 library(visdat)
 library(GGally)
 library(epiDisplay)
-library(plotROC)
 library(emmeans)
 library(tidyverse)
 library(kableExtra)
